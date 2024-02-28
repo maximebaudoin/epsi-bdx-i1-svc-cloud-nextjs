@@ -1,96 +1,100 @@
-import { NextResponse } from "next/server";
-import clientPromise from "../../lib/mongodb";
+import { NextApiRequest, NextApiResponse } from "next";
+import { useMongoDb } from "../../hooks/useMongoDb";
+import { OrmService } from "../../services/OrmService";
+import { MongoConfigService } from "../../services/MongoConfigService";
 
-export default async function handler(req: Request, res: Response) {
-
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
-        case 'POST':
-            return post(req, res);
+        case "POST": // TODO
+            // return post(req, res);
             break;
 
-        case 'GET':
+        case "GET":
             return get(req, res);
             break;
+
+        default:
+            return res.status(400).json({ status: 400, messages: "Bad Request" });
     }
 }
 
-async function get(req: Request, res: Response) {
+async function get(req: NextApiRequest, res: NextApiResponse) {
     try {
-        const client = await clientPromise;
-        const db = client.db("sample_mflix");
-        const movies = await db.collection("movies").find({}).limit(10).toArray();
+        const movies = await OrmService.connectAndFind(MongoConfigService.collections.movies);
 
-        return NextResponse.json({
+        return res.json({
             status: 200,
-            data: movies
+            data: movies,
         });
-    } catch(e) {
-        return new NextResponse("Internal Error", { status: 500 });
+    } catch (e) {
+        return res.status(500).json({ status: 500, message: "Internal Error" });
     }
 }
 
-interface postBodyParams {
-    title: string;
-    plot: string;
-    genres: string[],
-    runtime: {
-        [key: string]: string
-    };
-    cast: string[];
-    poster: string;
-    fullplot: string;
-    languages: string[];
-    released: {
-        [key:string]: {
-            [key:string]: string
-        }
-    };
-    directors: string[];
-    rated: string;
-    awards: {
-        [key:string]: {
-            [key:string]: string
-        } | string[]
-    };
-    lastupdated: string;
-    year: {
-        [key:string]: string
-    };
-    imdb: {
-        [key:string]: {
-            [key:string]: string
-        }
-    };
-    countries: string[];
-    type: string;
-    tomatoes: {
-        [key:string]: {
-            [key:string]: {
-                [key:string]: string
-            }
-        }
-    };
-    rotten: {
-        [key:string]: string
-    }
-    lastUpdated: {
-        [key:string]: {
-            [key:string]: string
-        }
-    };
-    num_mflix_comments: {
-        [key:string]: string
-    }
-}
+// interface postBodyParams {
+//     title: string;
+//     plot: string;
+//     genres: string[],
+//     runtime: {
+//         [key: string]: string
+//     };
+//     cast: string[];
+//     poster: string;
+//     fullplot: string;
+//     languages: string[];
+//     released: {
+//         [key:string]: {
+//             [key:string]: string
+//         }
+//     };
+//     directors: string[];
+//     rated: string;
+//     awards: {
+//         [key:string]: {
+//             [key:string]: string
+//         } | string[]
+//     };
+//     lastupdated: string;
+//     year: {
+//         [key:string]: string
+//     };
+//     imdb: {
+//         [key:string]: {
+//             [key:string]: string
+//         }
+//     };
+//     countries: string[];
+//     type: string;
+//     tomatoes: {
+//         [key:string]: {
+//             [key:string]: {
+//                 [key:string]: string
+//             }
+//         }
+//     };
+//     rotten: {
+//         [key:string]: string
+//     }
+//     lastUpdated: {
+//         [key:string]: {
+//             [key:string]: string
+//         }
+//     };
+//     num_mflix_comments: {
+//         [key:string]: string
+//     }
+// }
 
-async function post(req: Request, res: Response) {
-    try {
-        const body: postBodyParams = await req.json();
+// async function post(req: NextApiRequest, res: NextApiResponse) {
+//     try {
+//         const body = await req.json();
 
-        if (!body.title) {
-            return new NextResponse("Empty title param", { status: 401 });
-        }
-    } catch(e) {
-        return new NextResponse("Internal Error", { status: 500 });
-    }
-}
+//         if (!body.title) {
+//             return res
+//                 .status(401)
+//                 .json({ status: 401, message: "Empty title param" });
+//         }
+//     } catch (e) {
+//         return res.status(500).json({ status: 500, message: "Internal Error" });
+//     }
+// }
