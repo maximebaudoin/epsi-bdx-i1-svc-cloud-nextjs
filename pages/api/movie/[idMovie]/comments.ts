@@ -1,8 +1,7 @@
-import { ObjectId } from "mongodb";
-import { useMongoDb } from "../../../../hooks/useMongoDb";
 import { NextApiRequest, NextApiResponse } from "next";
 import { OrmService } from "../../../../services/OrmService";
 import { MongoConfigService } from "../../../../services/MongoConfigService";
+import { ObjectId } from "mongodb";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
@@ -23,6 +22,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
  * @swagger
  *   /api/movie/{idMovie}/comments:
  *     get:
+ *       tags:
+ *         - Comments
  *       description: Get comments of one movie
  *       parameters:
  *         - in: path
@@ -35,37 +36,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
  *           description: Success
  *         401:
  *           description: Invalid Movie ID
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 $ref: '#/components/schemas/ErrorResponse'
  *         500:
  *           description: Internal Error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 $ref: '#/components/schemas/ErrorResponse'
  */
 async function get(req: NextApiRequest, res: NextApiResponse) {
     try {
-        const db = await useMongoDb();
-
-        if (!db) {
-            return res.json({
-                status: 500,
-                message: "Impossible de se connecter à la base de données",
-            });
-        }
-
         const query = req.query;
 
         if (!query.idMovie) {
             return res.json({ status: 401, message: "Invalid Movie ID" });
         }
 
-        const comments = await db
-            .collection("comments")
-            .find({ movie_id: new ObjectId(query.idMovie as string) })
-            .toArray();
+        const comments = await OrmService.connectAndFindBy(MongoConfigService.collections.comments, "movie_id", new ObjectId(query.idMovie));
 
         return res.json({
             status: 200,
             data: comments,
         });
     } catch (e) {
-        return res.json({ status: 500, message: "Internal Error" });
+        console.log(e);
+        return res.status(500).json({ status: 500, message: "Internal Error" });
     }
 }
 
@@ -79,6 +77,8 @@ interface postBodyParams {
  * @swagger
  *   /api/movie/{idMovie}/comments:
  *     post:
+ *       tags:
+ *         - Comments
  *       description: Post a new comment for a movie
  *       parameters:
  *         - in: path
@@ -107,8 +107,16 @@ interface postBodyParams {
  *           description: Success
  *         401:
  *           description: Invalid Movie ID
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 $ref: '#/components/schemas/ErrorResponse'
  *         500:
  *           description: Internal Error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 $ref: '#/components/schemas/ErrorResponse'
  */
 async function post(req: NextApiRequest, res: NextApiResponse) {
     try {
@@ -138,6 +146,6 @@ async function post(req: NextApiRequest, res: NextApiResponse) {
         });
     } catch (e) {
         console.log(e);
-        return res.json({ status: 500, message: "Internal Erro" });
+        return res.status(500).json({ status: 500, message: "Internal Error" });
     }
 }

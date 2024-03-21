@@ -1,12 +1,11 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { useMongoDb } from "../../hooks/useMongoDb";
 import { OrmService } from "../../services/OrmService";
 import { MongoConfigService } from "../../services/MongoConfigService";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
-        case "POST": // TODO
-            // return post(req, res);
+        case "POST":
+            return post(req, res);
             break;
 
         case "GET":
@@ -22,12 +21,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
  * @swagger
  *   /api/movies:
  *     get:
+ *       tags:
+ *         - Movies
  *       description: Returns movies
  *       responses:
  *         200:
  *           description: Hello Movies
  *         500:
  *           description: Internal Error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 $ref: '#/components/schemas/ErrorResponse'
  */
 async function get(req: NextApiRequest, res: NextApiResponse) {
     try {
@@ -38,74 +43,97 @@ async function get(req: NextApiRequest, res: NextApiResponse) {
             data: movies,
         });
     } catch (e) {
+        console.log(e);
         return res.status(500).json({ status: 500, message: "Internal Error" });
     }
 }
 
-// interface postBodyParams {
-//     title: string;
-//     plot: string;
-//     genres: string[],
-//     runtime: {
-//         [key: string]: string
-//     };
-//     cast: string[];
-//     poster: string;
-//     fullplot: string;
-//     languages: string[];
-//     released: {
-//         [key:string]: {
-//             [key:string]: string
-//         }
-//     };
-//     directors: string[];
-//     rated: string;
-//     awards: {
-//         [key:string]: {
-//             [key:string]: string
-//         } | string[]
-//     };
-//     lastupdated: string;
-//     year: {
-//         [key:string]: string
-//     };
-//     imdb: {
-//         [key:string]: {
-//             [key:string]: string
-//         }
-//     };
-//     countries: string[];
-//     type: string;
-//     tomatoes: {
-//         [key:string]: {
-//             [key:string]: {
-//                 [key:string]: string
-//             }
-//         }
-//     };
-//     rotten: {
-//         [key:string]: string
-//     }
-//     lastUpdated: {
-//         [key:string]: {
-//             [key:string]: string
-//         }
-//     };
-//     num_mflix_comments: {
-//         [key:string]: string
-//     }
-// }
+interface postBodyParams {
+    title: string;
+    plot: string;
+    genres: string[],
+    runtime: {
+        [key: string]: string
+    };
+    cast: string[];
+    poster: string;
+    fullplot: string;
+    languages: string[];
+    released: {
+        [key:string]: {
+            [key:string]: string
+        }
+    };
+    directors: string[];
+    rated: string;
+    awards: {
+        [key:string]: {
+            [key:string]: string
+        } | string[]
+    };
+    lastupdated: string;
+    year: {
+        [key:string]: string
+    };
+    imdb: {
+        [key:string]: {
+            [key:string]: string
+        }
+    };
+    countries: string[];
+    type: string;
+    tomatoes: {
+        [key:string]: {
+            [key:string]: {
+                [key:string]: string
+            }
+        }
+    };
+    rotten: {
+        [key:string]: string
+    }
+    lastUpdated: {
+        [key:string]: {
+            [key:string]: string
+        }
+    };
+    num_mflix_comments: {
+        [key:string]: string
+    }
+}
 
-// async function post(req: NextApiRequest, res: NextApiResponse) {
-//     try {
-//         const body = await req.json();
+/**
+ * @swagger
+ *   /api/movies:
+ *     post:
+ *       tags:
+ *         - Movies
+ *       description: Post a new movie
+ *       responses:
+ *         200:
+ *           description: Success
+ *         500:
+ *           description: Internal Error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 $ref: '#/components/schemas/ErrorResponse'
+ */
+async function post(req: NextApiRequest, res: NextApiResponse) {
+    try {
+        const body: postBodyParams = req.body;
 
-//         if (!body.title) {
-//             return res
-//                 .status(401)
-//                 .json({ status: 401, message: "Empty title param" });
-//         }
-//     } catch (e) {
-//         return res.status(500).json({ status: 500, message: "Internal Error" });
-//     }
-// }
+        // Dans un contexte professionnel, je saurai exactement la liste complète des champs et quels sont les champs obligatoires ou non.
+        const movie = await OrmService.connectAndInsertOne(MongoConfigService.collections.movies, {
+            ...body
+        });
+
+        return res.json({
+            status: 200,
+            data: movie,
+        });
+    } catch (e) {
+        console.log(e);
+        return res.status(500).json({ status: 500, message: "Internal Error" });
+    }
+}

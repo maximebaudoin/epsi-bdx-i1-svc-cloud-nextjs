@@ -1,5 +1,3 @@
-import { ObjectId } from "mongodb";
-import { useMongoDb } from "../../../hooks/useMongoDb";
 import { NextApiRequest, NextApiResponse } from "next";
 import { OrmService } from "../../../services/OrmService";
 import { MongoConfigService } from "../../../services/MongoConfigService";
@@ -31,6 +29,8 @@ interface getParams {
  * @swagger
  *   /api/movie/{idMovie}:
  *     get:
+ *       tags:
+ *         - Movies
  *       description: Returns a movie based on its ID
  *       parameters:
  *         - in: path
@@ -43,8 +43,16 @@ interface getParams {
  *           description: Success
  *         401:
  *           description: Invalid Movie ID
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 $ref: '#/components/schemas/ErrorResponse'
  *         500:
  *           description: Internal Error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 $ref: '#/components/schemas/ErrorResponse'
  */
 async function get(req: NextApiRequest, res: NextApiResponse) {
     try {
@@ -61,7 +69,62 @@ async function get(req: NextApiRequest, res: NextApiResponse) {
             data: movie,
         });
     } catch (e) {
-        return res.json({ status: 500, message: "Internal Error" });
+        console.log(e);
+        return res.status(500).json({ status: 500, message: "Internal Error" });
+    }
+}
+
+interface putBodyParams {
+    title?: string;
+    plot?: string;
+    genres?: string[],
+    runtime?: {
+        [key: string]: string
+    };
+    cast?: string[];
+    poster?: string;
+    fullplot?: string;
+    languages?: string[];
+    released?: {
+        [key:string]: {
+            [key:string]: string
+        }
+    };
+    directors?: string[];
+    rated?: string;
+    awards?: {
+        [key:string]: {
+            [key:string]: string
+        } | string[]
+    };
+    lastupdated?: string;
+    year?: {
+        [key:string]: string
+    };
+    imdb?: {
+        [key:string]: {
+            [key:string]: string
+        }
+    };
+    countries?: string[];
+    type?: string;
+    tomatoes?: {
+        [key:string]: {
+            [key:string]: {
+                [key:string]: string
+            }
+        }
+    };
+    rotten?: {
+        [key:string]: string
+    };
+    lastUpdated?: {
+        [key:string]: {
+            [key:string]: string
+        }
+    };
+    num_mflix_comments?: {
+        [key:string]: string
     }
 }
 
@@ -69,6 +132,8 @@ async function get(req: NextApiRequest, res: NextApiResponse) {
  * @swagger
  *   /api/movie/{idMovie}:
  *     put:
+ *       tags:
+ *         - Movies
  *       description: Update a movie
  *       parameters:
  *         - in: path
@@ -81,8 +146,16 @@ async function get(req: NextApiRequest, res: NextApiResponse) {
  *           description: Success
  *         401:
  *           description: Invalid Movie ID
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 $ref: '#/components/schemas/ErrorResponse'
  *         500:
  *           description: Internal Error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 $ref: '#/components/schemas/ErrorResponse'
  */
 async function put(req: NextApiRequest, res: NextApiResponse) {
     try {
@@ -92,15 +165,23 @@ async function put(req: NextApiRequest, res: NextApiResponse) {
             return res.status(401).json({ status: 401, message: "Invalid Movie ID" });
         }
 
-        const body = req.body;
+        const currentMovie = await OrmService.connectAndFindOne(MongoConfigService.collections.movies, query.idMovie);
 
+        if (!currentMovie) {
+            return res.status(401).json({ status: 401, message: "Unknown Movie" });
+        }
+
+        const body: putBodyParams = req.body;
+
+        const updatedMovie = Object.keys(currentMovie).reduce((acc, key) => {
+            acc[key] = body[key] ?? currentMovie[key];
+            return acc;
+        }, {});
+
+        delete(updatedMovie._id);
+        
         const movie = await OrmService.connectAndUpdateOne(MongoConfigService.collections.movies, query.idMovie, {
-            "$set": {
-                // name: body.name ?? currentComment.name,
-                // email: body.email ?? currentComment.email,
-                // text: body.text ?? currentComment.text
-                plot: "antonin"
-            }
+            "$set": updatedMovie
         });
 
         return res.json({ status: 200, movie: movie });
@@ -114,6 +195,8 @@ async function put(req: NextApiRequest, res: NextApiResponse) {
  * @swagger
  *   /api/movie/{idMovie}:
  *     delete:
+ *       tags:
+ *         - Movies
  *       description: Delete a movie based on its ID
  *       parameters:
  *         - in: path
@@ -126,8 +209,16 @@ async function put(req: NextApiRequest, res: NextApiResponse) {
  *           description: Success
  *         401:
  *           description: Invalid Movie ID
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 $ref: '#/components/schemas/ErrorResponse'
  *         500:
  *           description: Internal Error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 $ref: '#/components/schemas/ErrorResponse'
  */
 async function _delete(req: NextApiRequest, res: NextApiResponse) {
     try {
@@ -141,6 +232,7 @@ async function _delete(req: NextApiRequest, res: NextApiResponse) {
 
         return res.json({ status: 200 });
     } catch (e) {
-        return res.json({ status: 500, message: "Internal Error" });
+        console.log(e);
+        return res.status(500).json({ status: 500, message: "Internal Error" });
     }
 }
