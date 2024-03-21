@@ -15,6 +15,6 @@
     "isolatedModules": true,
     "jsx": "preserve"
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "pages/api/movies.ts", "pages/swagger/index.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "pages/api/movies.ts", "pages/swagger/index.tsx", "pages/api/movie/[idMovie].js"],
   "exclude": ["node_modules"]
 }

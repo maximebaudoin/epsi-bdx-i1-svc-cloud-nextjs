@@ -18,6 +18,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 }
 
+/**
+ * @swagger
+ *   /api/movies:
+ *     get:
+ *       description: Returns movies
+ *       responses:
+ *         200:
+ *           description: Hello Movies
+ *         500:
+ *           description: Internal Error
+ */
 async function get(req: NextApiRequest, res: NextApiResponse) {
     try {
         const movies = await OrmService.connectAndFind(MongoConfigService.collections.movies);

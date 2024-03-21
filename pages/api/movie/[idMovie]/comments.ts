@@ -1,6 +1,8 @@
 import { ObjectId } from "mongodb";
 import { useMongoDb } from "../../../../hooks/useMongoDb";
 import { NextApiRequest, NextApiResponse } from "next";
+import { OrmService } from "../../../../services/OrmService";
+import { MongoConfigService } from "../../../../services/MongoConfigService";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
@@ -17,6 +19,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 }
 
+/**
+ * @swagger
+ *   /api/movie/{idMovie}/comments:
+ *     get:
+ *       description: Get comments of one movie
+ *       parameters:
+ *         - in: path
+ *           name: idMovie
+ *           required: true
+ *           type: string
+ *           description: ID of movie
+ *       responses:
+ *         200:
+ *           description: Success
+ *         401:
+ *           description: Invalid Movie ID
+ *         500:
+ *           description: Internal Error
+ */
 async function get(req: NextApiRequest, res: NextApiResponse) {
     try {
         const db = await useMongoDb();
@@ -54,17 +75,43 @@ interface postBodyParams {
     text: string,
 }
 
+/**
+ * @swagger
+ *   /api/movie/{idMovie}/comments:
+ *     post:
+ *       description: Post a new comment for a movie
+ *       parameters:
+ *         - in: path
+ *           name: idMovie
+ *           required: true
+ *           type: string
+ *           description: ID of deleted movie
+ *       requestBody:
+ *         content:
+ *           application/x-www-form-urlencoded:
+ *             schema:
+ *               type: object
+ *               required:
+ *                 - name
+ *                 - email
+ *                 - text
+ *               properties:
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 text:
+ *                   type: string
+ *       responses:
+ *         200:
+ *           description: Success
+ *         401:
+ *           description: Invalid Movie ID
+ *         500:
+ *           description: Internal Error
+ */
 async function post(req: NextApiRequest, res: NextApiResponse) {
     try {
-        const db = await useMongoDb();
-
-        if (!db) {
-            return res.json({
-                status: 500,
-                message: "Impossible de se connecter à la base de données",
-            });
-        }
-
         const query = req.query;
 
         if (!query.idMovie) {
@@ -75,7 +122,7 @@ async function post(req: NextApiRequest, res: NextApiResponse) {
 
         const body: postBodyParams = req.body;
 
-        const comment = await db.collection("comments").insertOne({
+        const comment = await OrmService.connectAndInsertOne(MongoConfigService.collections.comments, {
             movie_id: new ObjectId(query.idMovie as string),
 
             name: body.name,
@@ -91,6 +138,6 @@ async function post(req: NextApiRequest, res: NextApiResponse) {
         });
     } catch (e) {
         console.log(e);
-        return res.json({ status: 500, message: "Internal Errors" });
+        return res.json({ status: 500, message: "Internal Erro" });
     }
 }
