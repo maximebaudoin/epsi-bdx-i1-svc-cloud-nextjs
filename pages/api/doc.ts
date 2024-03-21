@@ -5,7 +5,7 @@ const swaggerHandler = withSwagger({
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'BrowserStack Demo API',
+            title: 'Atelier - Développement et Service Cloud',
             version: '1.0.0',
         },
         tags: [
